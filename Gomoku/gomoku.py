@@ -1,3 +1,7 @@
+import argparse
+from minimaxAgent import MinimaxPruneAgent
+from humanAgent import HumanAgent
+
 class GameState:
     """
     Class representing a single state of a Gomoku game.
@@ -12,19 +16,12 @@ class GameState:
         """Constructor for Gomoku state.
 
         Args:
-            Either a board (sequence of sequences, filled with 1, -1, 0, or -2, describing game state)
-            or two numbers specifying the rows, columns for a blank board
+            two numbers specifying the rows, columns for a blank board
         """    
-        if len(args) == 2:
-            r, c = args
-            self.num_rows = r
-            self.num_cols = c
-            self.board = tuple([ tuple([0]*self.num_cols) ]*self.num_rows)
-        else:
-            board = args[0]
-            self.num_rows = len(board)
-            self.num_cols = len(board[0])
-            self.board = tuple([ tuple(board[r]) for r in range(self.num_rows) ])
+        r, c = args
+        self.num_rows = r
+        self.num_cols = c
+        self.board = tuple([ tuple([0]*self.num_cols) ]*self.num_rows)
         
         # 1 for Player 1, -1 for Player 2
         self._next_p = 1 if (sum(sum(row) for row in self.board) % 2) == 0 else -1
@@ -72,7 +69,7 @@ class GameState:
     def get_cols(self):
         """Return a list of columns for the board."""
         return list(zip(*self.board))
-    
+
     def get_diags(self):
         """Return a list of all the diagonals for the board."""
         b = [None] * (len(self.board) - 1)
@@ -81,6 +78,63 @@ class GameState:
         grid_back = [b[:i] + r + b[i:] for i, r in enumerate(self.get_rows())]
         backs = [[c for c in r if c is not None] for r in zip(*grid_back)]
         return forwards + backs
+    
+    def __str__(self):
+        symbols = { -1: "O", 1: "X", 0: "-", -2: "#" }
+        s = ""
+        for r in range(self.num_rows-1, -1, -1):
+            s += "\n"
+            s += str(r)
+            for c in range(self.num_cols):
+                s += "  " + symbols[self.board[r][c]]
 
+        s += "\n "
+        for c in range(self.num_cols):
+            s += "  " + str(c)
+        s += "\n"
+        return s
+
+def streaks(lst):  
+    """Get the lengths of all the streaks of the same element in a sequence."""
+    rets = []  # list of (element, length) tuples
+    prev = lst[0]
+    curr_len = 1
+    for curr in lst[1:]:
+        if curr == prev:
+            curr_len += 1
+        else:
+            rets.append((prev, curr_len))
+            prev = curr
+            curr_len = 1
+    rets.append((prev, curr_len))
+    return rets
+
+def play_game(player1, player2, state):
+    """Run a Gomoku Game"""
+    print(state)
+    turn = 0
+    p1_state_count, p2_state_count = 0, 0
+    # TODO
+
+
+################################
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('p1', choices=['h','c'])
+    parser.add_argument('p2', choices=['h','c'])
+    parser.add_argument('nrows', type=int)
+    parser.add_argument('ncols', type=int)
+    args = parser.parse_args()
+
+    players = []
+    for p in [args.p1, args.p2]:
+        if p == 'h':
+            player = HumanAgent()
+        elif p == 'c':
+            player = MinimaxPruneAgent()
+        players.append(player)            
 
     
+    start_state = GameState(args.nrows, args.ncols)
+
+    play_game(players[0], players[1], start_state)
