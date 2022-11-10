@@ -2,6 +2,7 @@ import random
 import math
 
 class MinimaxAgent:
+    '''
     """Artificially intelligent agent that uses minimax to optimally select the best move."""
 
     def get_move(self, state):
@@ -38,8 +39,9 @@ class MinimaxAgent:
             minval = min(minval, val)
 
         return maxval if state.next_player() == 1 else minval
-
+'''
 class MinimaxPruneAgent(MinimaxAgent):
+    '''
     """Smarter computer agent that uses minimax with alpha-beta pruning to select the best move."""
 
     def minimax(self, state):
@@ -88,3 +90,4 @@ class MinimaxPruneAgent(MinimaxAgent):
                 b = min(b, minval)
                          
         return maxval if state.next_player() == 1 else minval
+    '''
