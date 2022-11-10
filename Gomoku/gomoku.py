@@ -104,7 +104,7 @@ class GameState:
         '''Check if there is already a winner'''
         for run in self.get_rows() + self.get_cols() + self.get_diags():
             for elt, length in streaks(run):
-                if length == 5:
+                if elt != 0 and length == 5:
                     return elt
         return 0
 
@@ -162,8 +162,6 @@ def play_game(player1, player2, state):
     print("Player 2 generated {} states".format(p2_state_count))
     print("")
     return 0
-
-
 
 ################################
 if __name__ == "__main__":
