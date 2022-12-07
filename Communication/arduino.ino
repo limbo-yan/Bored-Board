@@ -20,7 +20,6 @@ int player = 1;
 int PvC = 0;
 
 void setup() {
-
   for (int i = 0; i < colSize; i ++) {
     pinMode(col[i], OUTPUT);
   }
@@ -38,6 +37,7 @@ void setup() {
 
   Serial.begin(115200);
   Serial.setTimeout(1);
+
 }
 
 void light(int rowNum, int colNum, int p) {
@@ -71,6 +71,10 @@ void light(int rowNum, int colNum, int p) {
 void loop() {
   if (Serial.available() > 0) {
     String str = Serial.readString();
+    if (str.length() == 1) {
+      PvC = str.toInt();
+      return;
+    }
 
     if (str == "end") {
       pixels.clear();
