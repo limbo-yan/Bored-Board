@@ -11,6 +11,10 @@ from policy_value_net_pytorch import PolicyValueNet  # Pytorch
 import serial
 import time
 
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import firestore
+
 class Human(object):
     """
     human player
@@ -51,12 +55,59 @@ class Human(object):
       
 
 def run():
+    # Use a service account.
+    cred = credentials.Certificate('E:/UMass/2022Fall/SDP/App/sdpgomoku-5d9a762a1ba2.json')
+    app = firebase_admin.initialize_app(cred)
+    db = firestore.client()
+
     arduino = serial.Serial(port='COM3', baudrate=115200, timeout=0.1)
+
     n = 5
     width, height = 8, 8
-    # model_file = 'best_policy_3_3_3_pytorch100.model'
-    model_file = 'best_policy_8_8_5_pytorch950.model'
-    # model_file = 'best_policy_8_8_5.model'
+    # human player, input your move in the format: 2,3
+    human1 = Human(arduino)
+    human2 = Human(arduino)
+    
+    doc_settings = db.collection(u'SDP').document(u'settings')
+    settings = doc_settings.get()
+
+    if settings.exists:
+        s = settings.to_dict()
+    else:
+        print(u'No such document!')
+
+    # PvC = input("Wanna play with AI? Yes-1, No-0: ")
+    PvC = s["PvC"]
+    
+    if PvC == "0":
+        try:
+            board = Board(width=width, height=height, n_in_row=n)
+            game = Game(board, arduino)
+            arduino.write(bytes("0", 'utf-8'))
+            time.sleep(1)
+            game.start_play(db, human1, human2, start_player=0, is_shown=1)
+            # game.start_play(human1, human2, start_player=0, is_shown=1)
+        except KeyboardInterrupt:
+            arduino.write(bytes("end", 'utf-8'))
+            print('\n\rquit')
+        return
+    time.sleep(1)
+    arduino.write(bytes("1", 'utf-8'))
+    time.sleep(5)
+
+    # mode = input("Mode: 1-easy, 2-medium, 3-hard: ")
+    mode = s["difficulty"]
+    print(mode)
+    model_file = 'best_policy_8_8_5_pytorch2200.model'
+    if mode == "1":
+        print("easy")
+        model_file = 'best_policy_8_8_5_pytorch600.model'
+    elif mode == "2":
+        model_file = 'best_policy_8_8_5_pytorch950.model'
+        print("medium")
+    
+    
+    
     try:
         board = Board(width=width, height=height, n_in_row=n)
         game = Game(board, arduino)
@@ -82,17 +133,17 @@ def run():
         # uncomment the following line to play with pure MCTS (it's much weaker even with a larger n_playout)
         # mcts_player = MCTS_Pure(c_puct=5, n_playout=1000)
 
-        # human player, input your move in the format: 2,3
-        human1 = Human(arduino)
-        human2 = Human(arduino)
+        
 
         # set start_player=0 for human first
+        game.start_play(db, human1, mcts_player, start_player=1, is_shown=1)
         # game.start_play(human1, mcts_player, start_player=1, is_shown=1)
 
         # two players
-        game.start_play(human1, human2, start_player=0, is_shown=1)
+        # game.start_play(human1, human2, start_player=0, is_shown=1)
         
     except KeyboardInterrupt:
+        arduino.write(bytes("end", 'utf-8'))
         print('\n\rquit')
 
 

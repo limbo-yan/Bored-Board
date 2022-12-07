@@ -157,7 +157,7 @@ class Game(object):
                     print('_'.center(8), end='')
             print('\r\n\r\n')
 
-    def start_play(self, player1, player2, start_player=0, is_shown=1):
+    def start_play(self, db, player1, player2, start_player=0, is_shown=1):
         """start a game between two players"""
         if start_player not in (0, 1):
             raise Exception('start_player should be either 0 (player1 first) '
@@ -174,6 +174,18 @@ class Game(object):
             player_in_turn = players[current_player]
             move = player_in_turn.get_action(self.board)
             self.board.do_move(move)
+            doc_ref = db.collection(u'SDP').document(u'Steplog')
+            # doc_ref = db.collection(u'SDP').document(str(player_in_turn))
+            loc = self.board.move_to_location(move)
+            print(loc)
+            doc_ref.set({
+                u'flag': u'true',
+                u'LocationRow': str(loc[0]),
+                u'LocationCol': str(loc[1]),
+                u'Player': str(player_in_turn),
+                u'GameStatus': u'Not finished.',
+                u'Winner': '',
+            })
 
             if current_player == 2:
                 loc = self.board.move_to_location(move)
@@ -191,8 +203,26 @@ class Game(object):
                 if is_shown:
                     if winner != -1:
                         print("Game end. Winner is", players[winner])
+                        doc_ref = db.collection(u'SDP').document(u'Steplog')
+                        doc_ref.set({
+                            u'flag': u'false',
+                            u'LocationRow': '',
+                            u'LocationCol': '',
+                            u'Player': '',
+                            u'GameStatus': u'Game end.',
+                            u'Winner': str(players[winner]),
+                        })
                     else:
                         print("Game end. Tie")
+                        doc_ref = db.collection(u'SDP').document(u'Steplog')
+                        doc_ref.set({
+                            u'flag': u'false',
+                            u'LocationRow': '',
+                            u'LocationCol': '',
+                            u'Player': '',
+                            u'GameStatus': u'Game end.',
+                            u'Winner': 'Tie',
+                        })
                 return winner
 
     def start_self_play(self, player, is_shown=0, temp=1e-3):
